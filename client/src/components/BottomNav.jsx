@@ -20,6 +20,9 @@ export default function BottomNav() {
       borderTop: '1px solid var(--border)',
       display: 'flex',
       zIndex: 50,
+      // extra clearance for the iOS home-indicator safe area on notched devices,
+      // degrades to the flat value on everything else
+      paddingBottom: 'max(22px, calc(12px + env(safe-area-inset-bottom)))',
     }}>
       {tabs.map(({ to, label, icon: Icon }) => (
         <NavLink
@@ -65,9 +68,9 @@ function ChartBarIcon({ size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="3" y1="21" x2="21" y2="21"/>
-      <rect x="5" y="11" width="3.5" height="8" rx="1"/>
-      <rect x="10.5" y="5.5" width="3.5" height="13.5" rx="1"/>
-      <rect x="16" y="14" width="3.5" height="5" rx="1"/>
+      <rect x="5" y="11" width="3.5" height="8" rx="1" fill="currentColor" stroke="none"/>
+      <rect x="10.5" y="5.5" width="3.5" height="13.5" rx="1" fill="currentColor" stroke="none"/>
+      <rect x="16" y="14" width="3.5" height="5" rx="1" fill="currentColor" stroke="none"/>
     </svg>
   );
 }
