@@ -1,5 +1,5 @@
 import FitParser from 'fit-file-parser';
-import { createHash } from 'node:crypto';
+import { deriveActivityId } from './activityId.js';
 
 const SPORT_MAP = {
   running: 'run',
@@ -17,11 +17,6 @@ function mapSport(sport) {
   if (!sport) return 'other';
   const key = sport.toLowerCase().replace(/\s+/g, '_');
   return SPORT_MAP[key] ?? 'other';
-}
-
-function deriveId(date, type, durationSeconds) {
-  const raw = `${date}|${type}|${durationSeconds}`;
-  return createHash('sha1').update(raw).digest('hex').slice(0, 16);
 }
 
 export async function parseFitFile(buffer) {
@@ -53,7 +48,7 @@ export async function parseFitFile(buffer) {
       ? session.start_time.toISOString().split('T')[0]
       : new Date().toISOString().split('T')[0];
 
-    const id = deriveId(date, type, durationSeconds);
+    const id = deriveActivityId(date, type, durationSeconds);
 
     return {
       id,
@@ -71,6 +66,7 @@ export async function parseFitFile(buffer) {
       training_load: session.training_load_peak ?? session.training_load ?? null,
       raw_json: JSON.stringify(session),
       synced_at: new Date().toISOString(),
+      source: 'fit',
     };
   } catch {
     return null;

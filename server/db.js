@@ -1,11 +1,78 @@
 import Database from 'better-sqlite3';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { deriveActivityId } from './services/activityId.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DB_PATH = join(__dirname, '..', 'data', 'coach.db');
 
 let db;
+
+const SOURCE_PRIORITY = { strava: 3, fit: 2, whoop: 1 };
+
+function inferLegacySource(id) {
+  if (id.startsWith('strava_')) return 'strava';
+  if (id.startsWith('whoop_')) return 'whoop';
+  return 'fit';
+}
+
+function addSourceColumnIfMissing(db) {
+  const cols = db.prepare('PRAGMA table_info(coros_activities)').all();
+  if (!cols.some(c => c.name === 'source')) {
+    db.exec('ALTER TABLE coros_activities ADD COLUMN source TEXT');
+  }
+}
+
+// One-time (idempotent) migration: older rows used a source-prefixed id
+// (strava_<id>, whoop_<id>) which meant the same real-world activity synced
+// from two sources (e.g. a run auto-uploaded to both WHOOP and Strava)
+// created two rows. This re-keys every row to a hash of date|type|duration
+// (see services/activityId.js) so cross-source duplicates collapse into one.
+function migrateActivityIds(db) {
+  const rows = db.prepare('SELECT * FROM coros_activities').all();
+  if (rows.length === 0) return;
+
+  const groups = new Map();
+  for (const row of rows) {
+    const source = row.source ?? inferLegacySource(row.id);
+    const newId = deriveActivityId(row.date, row.type, row.duration_seconds);
+    if (!groups.has(newId)) groups.set(newId, []);
+    groups.get(newId).push({ ...row, source });
+  }
+
+  const alreadyMigrated = rows.every(r => r.source != null)
+    && [...groups.values()].every(g => g.length === 1)
+    && rows.every(r => r.id === deriveActivityId(r.date, r.type, r.duration_seconds));
+  if (alreadyMigrated) return;
+
+  const winners = [];
+  for (const [newId, group] of groups) {
+    group.sort((a, b) => {
+      const distRank = (b.distance_meters != null ? 1 : 0) - (a.distance_meters != null ? 1 : 0);
+      if (distRank !== 0) return distRank;
+      return (SOURCE_PRIORITY[b.source] ?? 0) - (SOURCE_PRIORITY[a.source] ?? 0);
+    });
+    winners.push({ ...group[0], id: newId });
+  }
+
+  const insert = db.prepare(`
+    INSERT INTO coros_activities
+      (id, type, date, duration_seconds, distance_meters, avg_pace_seconds_per_km,
+       avg_hr, max_hr, calories, elevation_gain_meters, cadence, vo2max,
+       training_load, raw_json, synced_at, source)
+    VALUES (@id, @type, @date, @duration_seconds, @distance_meters, @avg_pace_seconds_per_km,
+       @avg_hr, @max_hr, @calories, @elevation_gain_meters, @cadence, @vo2max,
+       @training_load, @raw_json, @synced_at, @source)
+  `);
+
+  const migrate = db.transaction(() => {
+    db.exec('DELETE FROM coros_activities');
+    for (const w of winners) insert.run(w);
+  });
+  migrate();
+
+  console.log(`[db] Migrated coros_activities ids — ${rows.length} rows deduped to ${winners.length}`);
+}
 
 export function initDb() {
   db = new Database(DB_PATH);
@@ -28,7 +95,8 @@ export function initDb() {
       vo2max REAL,
       training_load REAL,
       raw_json TEXT,
-      synced_at TEXT
+      synced_at TEXT,
+      source TEXT
     );
 
     CREATE TABLE IF NOT EXISTS coros_health (
@@ -99,6 +167,9 @@ export function initDb() {
       updated_at TEXT
     );
   `);
+
+  addSourceColumnIfMissing(db);
+  migrateActivityIds(db);
 
   return db;
 }

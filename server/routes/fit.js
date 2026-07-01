@@ -10,8 +10,8 @@ const upsertActivity = (db) => db.prepare(`
   INSERT INTO coros_activities
     (id, type, date, duration_seconds, distance_meters, avg_pace_seconds_per_km,
      avg_hr, max_hr, calories, elevation_gain_meters, cadence, vo2max, training_load,
-     raw_json, synced_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     raw_json, synced_at, source)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   ON CONFLICT(id) DO UPDATE SET
     type = excluded.type,
     date = excluded.date,
@@ -26,7 +26,8 @@ const upsertActivity = (db) => db.prepare(`
     vo2max = excluded.vo2max,
     training_load = excluded.training_load,
     raw_json = excluded.raw_json,
-    synced_at = excluded.synced_at
+    synced_at = excluded.synced_at,
+    source = excluded.source
 `);
 
 router.post('/upload', upload.array('files'), async (req, res) => {
@@ -48,7 +49,7 @@ router.post('/upload', upload.array('files'), async (req, res) => {
       activity.distance_meters, activity.avg_pace_seconds_per_km,
       activity.avg_hr, activity.max_hr, activity.calories,
       activity.elevation_gain_meters, activity.cadence, activity.vo2max,
-      activity.training_load, activity.raw_json, activity.synced_at
+      activity.training_load, activity.raw_json, activity.synced_at, activity.source
     );
     imported.push({ id: activity.id, type: activity.type, date: activity.date });
   }

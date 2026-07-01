@@ -39,7 +39,7 @@ export async function startCron() {
   }
 
   // Strava: full backfill on first launch, always sync recent data on startup
-  const stravaCount = db.prepare("SELECT COUNT(*) as n FROM coros_activities WHERE id LIKE 'strava_%'").get().n;
+  const stravaCount = db.prepare("SELECT COUNT(*) as n FROM coros_activities WHERE source = 'strava'").get().n;
   if (stravaHasToken()) {
     if (stravaCount === 0) {
       console.log('[cron] First launch — running 90-day Strava backfill...');

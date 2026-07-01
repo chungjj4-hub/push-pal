@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getDb } from '../db.js';
+import { deriveActivityId } from './activityId.js';
 
 const STRAVA_BASE = 'https://www.strava.com';
 const STRAVA_API = 'https://www.strava.com/api/v3';
@@ -92,7 +93,7 @@ function activityToRow(a) {
     : null;
 
   return {
-    id: `strava_${a.id}`,
+    id: deriveActivityId(date, type, durationSeconds),
     type,
     date,
     duration_seconds: durationSeconds,
@@ -107,6 +108,7 @@ function activityToRow(a) {
     training_load: null,
     raw_json: JSON.stringify(a),
     synced_at: new Date().toISOString(),
+    source: 'strava',
   };
 }
 
@@ -133,11 +135,11 @@ export async function syncStrava(days = 7) {
     INSERT INTO coros_activities
       (id, type, date, duration_seconds, distance_meters, avg_pace_seconds_per_km,
        avg_hr, max_hr, calories, elevation_gain_meters, cadence, vo2max,
-       training_load, raw_json, synced_at)
+       training_load, raw_json, synced_at, source)
     VALUES
       (@id, @type, @date, @duration_seconds, @distance_meters, @avg_pace_seconds_per_km,
        @avg_hr, @max_hr, @calories, @elevation_gain_meters, @cadence, @vo2max,
-       @training_load, @raw_json, @synced_at)
+       @training_load, @raw_json, @synced_at, @source)
     ON CONFLICT(id) DO UPDATE SET
       type = excluded.type, date = excluded.date,
       duration_seconds = excluded.duration_seconds,
@@ -148,7 +150,8 @@ export async function syncStrava(days = 7) {
       elevation_gain_meters = excluded.elevation_gain_meters,
       cadence = excluded.cadence,
       raw_json = excluded.raw_json,
-      synced_at = excluded.synced_at
+      synced_at = excluded.synced_at,
+      source = excluded.source
   `);
 
   db.transaction(() => { for (const a of activities) upsert.run(activityToRow(a)); })();

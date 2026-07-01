@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getDb } from '../db.js';
+import { deriveActivityId } from './activityId.js';
 
 const WHOOP_BASE = 'https://api.prod.whoop.com';
 const SCOPES = 'read:recovery read:cycles read:workout read:sleep read:profile read:body_measurement offline';
@@ -138,10 +139,12 @@ function workoutToRow(w) {
     ? Math.round((new Date(w.end) - new Date(w.start)) / 1000)
     : null;
   const score = w.score ?? {};
+  const type = mapWhoopSport(w.sport_name);
+  const date = w.start ? w.start.split('T')[0] : null;
   return {
-    id: `whoop_${w.id}`,
-    type: mapWhoopSport(w.sport_name),
-    date: w.start ? w.start.split('T')[0] : null,
+    id: deriveActivityId(date, type, durationSeconds),
+    type,
+    date,
     duration_seconds: durationSeconds,
     distance_meters: score.distance_meter ?? null,
     avg_pace_seconds_per_km: null,
@@ -154,6 +157,7 @@ function workoutToRow(w) {
     training_load: score.strain ?? null,
     raw_json: JSON.stringify(w),
     synced_at: new Date().toISOString(),
+    source: 'whoop',
   };
 }
 
@@ -206,11 +210,11 @@ export async function syncWhoop(days = 7) {
     INSERT INTO coros_activities
       (id, type, date, duration_seconds, distance_meters, avg_pace_seconds_per_km,
        avg_hr, max_hr, calories, elevation_gain_meters, cadence, vo2max,
-       training_load, raw_json, synced_at)
+       training_load, raw_json, synced_at, source)
     VALUES
       (@id, @type, @date, @duration_seconds, @distance_meters, @avg_pace_seconds_per_km,
        @avg_hr, @max_hr, @calories, @elevation_gain_meters, @cadence, @vo2max,
-       @training_load, @raw_json, @synced_at)
+       @training_load, @raw_json, @synced_at, @source)
     ON CONFLICT(id) DO UPDATE SET
       type = excluded.type, date = excluded.date,
       duration_seconds = excluded.duration_seconds,
@@ -220,7 +224,8 @@ export async function syncWhoop(days = 7) {
       elevation_gain_meters = excluded.elevation_gain_meters,
       training_load = excluded.training_load,
       raw_json = excluded.raw_json,
-      synced_at = excluded.synced_at
+      synced_at = excluded.synced_at,
+      source = excluded.source
   `);
 
   const now = new Date().toISOString();
