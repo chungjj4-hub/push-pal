@@ -5,13 +5,12 @@
  *
  *   <CoachNote>{briefing.coachNote}</CoachNote>
  *
- * Light indigo palette (translucent lavender card, indigo header, dark-navy
- * serif body) — sits as a bright "the coach is talking to you" panel on the
- * dark app surface.
+ * iOS-glass frosted panel (indigo header, dark-navy serif body) — sits as a
+ * bright "the coach is talking to you" panel on the dark app surface.
  */
 const VOICE = {
-  bg: 'rgba(244, 242, 255, 0.88)',   // translucent light lavender
-  border: '#5b4fe8',                  // darker-purple outline
+  bg: 'rgba(244, 242, 255, 0.28)',    // frosted light lavender
+  border: 'rgba(201, 194, 255, 0.4)', // soft lavender outline
   brand: '#5b4fe8',                   // header / bolt
   text: '#2b2470',                    // dark navy-indigo body
 };
@@ -21,12 +20,15 @@ export default function CoachNote({ children, label = 'Push Pal' }) {
     <div
       style={{
         background: VOICE.bg,
-        border: `1.5px solid ${VOICE.border}`,
+        border: `1px solid ${VOICE.border}`,
         borderRadius: '14px',
         padding: '14px 16px',
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+        boxShadow: '0 8px 28px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.3)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
