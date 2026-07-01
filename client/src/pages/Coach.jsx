@@ -105,11 +105,11 @@ export default function Coach() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 72px)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 94px)' }}>
       <div style={{ padding: '16px 16px 8px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Logo size={26} />
-          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>Push Pal</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Logo size={28} />
+          <h1 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Coach</h1>
         </div>
         <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
           <Chip label={`WHOOP ${whoopStatus ? '✓ connected' : '○ not connected'}`} color={whoopStatus ? 'var(--accent)' : 'var(--text-muted)'} />

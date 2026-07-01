@@ -51,7 +51,12 @@ export default function Progress() {
 
   return (
     <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700 }}>Progress</h1>
+      <div>
+        <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 700, letterSpacing: '-0.02em' }}>Progress</h1>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
+          Marathon block · Week {marathon.currentTrainingWeek} of 16
+        </div>
+      </div>
 
       {/* ── Goal-first cards ───────────────────────────────── */}
       <MarathonCard marathon={marathon} activities={activities} />

@@ -23,7 +23,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '72px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '94px' }}>
         <Routes>
           <Route path="/" element={<Navigate to="/today" replace />} />
           <Route path="/today" element={<Today />} />

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import BriefingCard from '../components/BriefingCard';
-import JournalCheckIn from '../components/JournalCheckIn';
 import Logo from '../components/Logo';
 import Splash from '../components/Splash';
 
@@ -232,16 +231,14 @@ export default function Today() {
 
   return (
     <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Logo size={26} />
-        <span style={{ fontSize: '15px', fontWeight: 700 }}>Push Pal</span>
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700 }}>Good morning, Justin</h1>
-        <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-          {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+        <Logo size={32} />
+        <div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 600, letterSpacing: '-0.01em' }}>Good morning, Justin</div>
+        </div>
       </div>
 
       {whoopConnected === false ? (
@@ -260,8 +257,6 @@ export default function Today() {
           No briefing available — WHOOP data is syncing, check back in a minute.
         </div>
       )}
-
-      <JournalCheckIn />
     </div>
   );
 }

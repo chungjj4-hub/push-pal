@@ -1,47 +1,112 @@
 import { useState, useEffect } from 'react';
+import JournalCheckIn from '../components/JournalCheckIn';
 
 const TABS = ['Run', 'Lift', 'Soccer', 'Climb', 'Other'];
 const TAB_TYPES = { Run: 'run', Lift: 'lift', Soccer: 'soccer', Climb: 'climb', Other: 'other' };
+const MODES = ['Check-In', 'Log Workout'];
+
+// Consecutive-day streak ending at today (or yesterday, if today isn't
+// logged yet — an in-progress day shouldn't zero out the streak).
+function computeStreak(entries) {
+  const dates = new Set(entries.map(e => e.date));
+  const cursor = new Date();
+  const todayStr = cursor.toISOString().split('T')[0];
+  if (!dates.has(todayStr)) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (dates.has(cursor.toISOString().split('T')[0])) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
 
 export default function Log() {
+  const [mode, setMode] = useState('Check-In');
   const [activeTab, setActiveTab] = useState('Run');
   const [toast, setToast] = useState(null);
+  const [history, setHistory] = useState([]);
+
+  function loadHistory() {
+    fetch('/journal?days=60')
+      .then(r => r.json())
+      .then(rows => setHistory(Array.isArray(rows) ? rows : []))
+      .catch(() => {});
+  }
+
+  useEffect(loadHistory, []);
 
   function showToast(msg, isError = false) {
     setToast({ msg, isError });
     setTimeout(() => setToast(null), 3500);
   }
 
+  const streak = computeStreak(history);
+
   return (
     <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700 }}>Log Activity</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 700, letterSpacing: '-0.02em' }}>Log</h1>
+        {streak > 0 && <StreakPill count={streak} />}
+      </div>
 
-      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '2px' }}>
-        {TABS.map(tab => (
+      <div style={{ display: 'flex', gap: '8px' }}>
+        {MODES.map(m => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={m}
+            onClick={() => setMode(m)}
             style={{
-              flexShrink: 0,
-              padding: '7px 16px',
-              borderRadius: '20px',
+              flex: 1,
+              padding: '9px 0',
+              borderRadius: '10px',
               fontSize: '13px',
-              fontWeight: 500,
+              fontWeight: 600,
               border: '1px solid',
-              borderColor: activeTab === tab ? 'var(--accent)' : 'var(--border)',
-              background: activeTab === tab ? 'var(--accent)15' : 'transparent',
-              color: activeTab === tab ? 'var(--accent)' : 'var(--text-muted)',
+              borderColor: mode === m ? 'var(--accent)' : 'var(--border)',
+              background: mode === m ? 'var(--accent)15' : 'transparent',
+              color: mode === m ? 'var(--accent)' : 'var(--text-muted)',
               cursor: 'pointer',
             }}
           >
-            {tab}
+            {m}
           </button>
         ))}
       </div>
 
-      <WorkoutForm type={TAB_TYPES[activeTab]} tabLabel={activeTab} onSaved={showToast} />
+      {mode === 'Check-In' ? (
+        <>
+          <JournalCheckIn onSaved={loadHistory} />
+          <RecentCard history={history} />
+        </>
+      ) : (
+        <>
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '2px' }}>
+            {TABS.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  flexShrink: 0,
+                  padding: '7px 16px',
+                  borderRadius: '20px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  border: '1px solid',
+                  borderColor: activeTab === tab ? 'var(--accent)' : 'var(--border)',
+                  background: activeTab === tab ? 'var(--accent)15' : 'transparent',
+                  color: activeTab === tab ? 'var(--accent)' : 'var(--text-muted)',
+                  cursor: 'pointer',
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
 
-      <StravaCard onResult={showToast} />
+          <WorkoutForm type={TAB_TYPES[activeTab]} tabLabel={activeTab} onSaved={showToast} />
+
+          <StravaCard onResult={showToast} />
+        </>
+      )}
 
       {toast && (
         <div style={{
@@ -223,6 +288,55 @@ function StravaCard({ onResult }) {
             {syncing ? 'Syncing...' : 'Sync Now'}
           </button>
         </div>
+      )}
+    </div>
+  );
+}
+
+function StreakPill({ count }) {
+  return (
+    <span style={{
+      background: 'var(--brand-tint)',
+      color: 'var(--brand-text)',
+      border: '1px solid #2b2470',
+      borderRadius: '20px',
+      fontSize: '12px',
+      fontWeight: 600,
+      padding: '5px 12px',
+    }}>
+      🔥 {count}-day streak
+    </span>
+  );
+}
+
+function RecentCard({ history }) {
+  const today = new Date().toISOString().split('T')[0];
+  const entries = history.filter(e => e.date !== today).slice(0, 5);
+
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Recent</div>
+      {entries.length === 0 ? (
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No check-ins logged yet.</div>
+      ) : (
+        entries.map((e, i) => (
+          <div key={e.date}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: '14px' }}>
+                  {new Date(`${e.date}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  {e.notes || (e.soreness_areas?.length ? `Sore: ${e.soreness_areas.join(', ').replace(/_/g, ' ')}` : 'No notes')}
+                </div>
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap', marginLeft: '12px' }}>
+                {e.energy != null ? `E ${e.energy}` : ''}{e.energy != null && e.mood != null ? ' · ' : ''}{e.mood != null ? `M ${e.mood}` : ''}
+              </div>
+            </div>
+            {i < entries.length - 1 && <div style={{ borderBottom: '1px solid var(--border)', marginTop: '12px' }} />}
+          </div>
+        ))
       )}
     </div>
   );

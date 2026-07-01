@@ -72,19 +72,19 @@ export default function Splash({ longLoad = false }) {
     >
       <div
         style={{
-          width: '88px',
-          height: '88px',
-          borderRadius: '22px',
+          width: '96px',
+          height: '96px',
+          borderRadius: '24px',
           background: 'rgba(255,255,255,0.15)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <Logo size={64} variant="splash" radius={18} />
+        <Logo size={66} variant="splash" radius={18} />
       </div>
 
-      <div style={{ fontSize: '20px', fontWeight: 500, color: '#fff', letterSpacing: '-0.01em' }}>
+      <div style={{ fontSize: '22px', fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>
         Push Pal
       </div>
 
@@ -101,13 +101,13 @@ export default function Splash({ longLoad = false }) {
         {phrase}
       </div>
 
-      <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+      <div style={{ display: 'flex', gap: '7px', marginTop: '4px' }}>
         {[0, 1, 2].map(i => (
           <div
             key={i}
             style={{
-              width: '6px',
-              height: '6px',
+              width: '7px',
+              height: '7px',
               borderRadius: '50%',
               background: '#fff',
               opacity: i === 0 ? 1 : 0.5,
