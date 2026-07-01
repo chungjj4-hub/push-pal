@@ -5,14 +5,14 @@
  *
  *   <CoachNote>{briefing.coachNote}</CoachNote>
  *
- * iOS-glass frosted panel (indigo header, dark-navy serif body) — sits as a
- * bright "the coach is talking to you" panel on the dark app surface.
+ * iOS-glass frosted panel (indigo header, light-lavender serif body) — sits
+ * as a bright "the coach is talking to you" panel on the dark app surface.
  */
 const VOICE = {
   bg: 'rgba(244, 242, 255, 0.28)',    // frosted light lavender
   border: 'rgba(201, 194, 255, 0.4)', // soft lavender outline
   brand: '#5b4fe8',                   // header / bolt
-  text: '#2b2470',                    // dark navy-indigo body
+  text: '#c9c2ff',                    // --brand-text: light lavender for brand text on dark
 };
 
 export default function CoachNote({ children, label = 'Push Pal' }) {
@@ -39,7 +39,6 @@ export default function CoachNote({ children, label = 'Push Pal' }) {
         style={{
           fontFamily: 'var(--font-voice)',
           fontSize: '14px',
-          fontStyle: 'italic',
           color: VOICE.text,
           lineHeight: 1.7,
         }}
@@ -50,7 +49,7 @@ export default function CoachNote({ children, label = 'Push Pal' }) {
   );
 }
 
-/* Render **bold** spans in the same dark-navy color at medium weight,
+/* Render **bold** spans in the same light-lavender color at medium weight,
    never a different color. Plain strings pass straight through. */
 function renderEmphasis(content) {
   if (typeof content !== 'string') return content;
