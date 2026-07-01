@@ -7,7 +7,7 @@ async function runWhoopSync(days = 7) {
   if (!whoopHasToken()) return;
   try {
     const result = await syncWhoop(days);
-    console.log(`[cron] WHOOP sync complete — ${result.synced} cycles`);
+    console.log(`[cron] WHOOP sync complete — ${result.synced} cycles, ${result.workoutsSynced} workouts`);
   } catch (err) {
     console.error('[cron] WHOOP sync error:', err.message);
   }
