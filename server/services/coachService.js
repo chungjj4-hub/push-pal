@@ -45,6 +45,14 @@ Coaching rules:
 - Proactively flag anomalies (e.g. "HRV has trended down 3 days in a row")
 - Be direct and specific. No filler. No generic motivation.`;
 
+// LLMs are unreliable at computing day-of-week from a raw ISO date string —
+// compute it deterministically server-side instead of leaving it to the model.
+// Noon UTC + UTC timezone avoids the date shifting a day in negative-offset
+// zones when parsing a bare YYYY-MM-DD string.
+function weekdayOf(dateStr) {
+  return new Date(`${dateStr}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
+}
+
 export function buildContext() {
   const db = getDb();
   const today = new Date().toISOString().split('T')[0];
@@ -94,10 +102,11 @@ export function buildContext() {
   return {
     today: {
       date: today,
+      weekday: weekdayOf(today),
       whoopRecovery: todayWhoop ?? null,
       journalEntry: todayJournal ?? null,
     },
-    recentActivities: recentActivities.map(toImperialActivity),
+    recentActivities: recentActivities.map(a => ({ ...toImperialActivity(a), weekday: weekdayOf(a.date) })),
     recentRecovery,
     recentJournal,
     goals,
@@ -109,7 +118,7 @@ export function buildContext() {
 
 export async function getBriefing() {
   const context = buildContext();
-  const userMessage = `Here is Justin's current training data:\n\n${JSON.stringify(context, null, 2)}\n\nGenerate today's morning briefing as a JSON object with exactly these fields:\n{\n  "readiness": "high | moderate | low",\n  "todayRecommendation": "2-4 specific, actionable sentences",\n  "watchOuts": ["specific flags with real numbers"],\n  "weeklySnapshot": "1-2 sentences on the week",\n  "coachNote": "PUNCHY closing line — the single sharpest takeaway. 1-2 short sentences, ~30 words MAX, must fit in 3 lines. No preamble, no hedging. Make it land."\n}\n\nReturn only valid JSON, no markdown.`;
+  const userMessage = `Today is ${context.today.weekday}, ${context.today.date}. Every date below carries its own weekday — use those, never compute a weekday yourself.\n\nHere is Justin's current training data:\n\n${JSON.stringify(context, null, 2)}\n\nGenerate today's morning briefing as a JSON object with exactly these fields:\n{\n  "readiness": "high | moderate | low",\n  "todayRecommendation": "2-4 specific, actionable sentences",\n  "watchOuts": ["specific flags with real numbers"],\n  "weeklySnapshot": "1-2 sentences on the week",\n  "coachNote": "PUNCHY closing line — the single sharpest takeaway. 1-2 short sentences, ~30 words MAX, must fit in 3 lines. No preamble, no hedging. Make it land."\n}\n\nReturn only valid JSON, no markdown.`;
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
@@ -132,7 +141,7 @@ export async function getBriefing() {
 
 export async function* streamChat(messages) {
   const context = buildContext();
-  const contextMsg = `[Current training context: ${JSON.stringify(context)}]\n\n`;
+  const contextMsg = `[Today is ${context.today.weekday}, ${context.today.date}. Every date below carries its own weekday — use those, never compute a weekday yourself. Current training context: ${JSON.stringify(context)}]\n\n`;
   const augmentedMessages = [
     { role: 'user', content: contextMsg + messages[0].content },
     ...messages.slice(1),
