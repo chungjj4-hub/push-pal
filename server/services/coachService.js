@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { getDb } from '../db.js';
 import { metersToMiles, metersToFeet, toImperialActivity } from '../utils/units.js';
+import { hasToken as whoopHasToken } from './whoopService.js';
+import { hasToken as stravaHasToken } from './stravaService.js';
 
 const client = new Anthropic();
 
@@ -106,6 +108,15 @@ export function buildContext() {
       whoopRecovery: todayWhoop ?? null,
       journalEntry: todayJournal ?? null,
     },
+    // Explicit connection status per source — don't make the model infer
+    // this from data presence/absence, same reasoning as weekdayOf() above.
+    connectedSources: {
+      whoop: whoopHasToken(),
+      strava: stravaHasToken(),
+    },
+    // recentActivities.source tells you which integration each row came
+    // from ("whoop" | "strava" | "fit" for manually-imported .fit files);
+    // cite it when asked where specific data came from.
     recentActivities: recentActivities.map(a => ({ ...toImperialActivity(a), weekday: weekdayOf(a.date) })),
     recentRecovery,
     recentJournal,
@@ -141,7 +152,7 @@ export async function getBriefing() {
 
 export async function* streamChat(messages) {
   const context = buildContext();
-  const contextMsg = `[Today is ${context.today.weekday}, ${context.today.date}. Every date below carries its own weekday — use those, never compute a weekday yourself. Current training context: ${JSON.stringify(context)}]\n\n`;
+  const contextMsg = `[Today is ${context.today.weekday}, ${context.today.date}. Every date below carries its own weekday — use those, never compute a weekday yourself. connectedSources shows which integrations are actually connected right now; recentActivities[].source shows which one each activity came from ("whoop" | "strava" | "fit" for manually-imported .fit files) — cite these directly instead of saying you don't know. Current training context: ${JSON.stringify(context)}]\n\n`;
   const augmentedMessages = [
     { role: 'user', content: contextMsg + messages[0].content },
     ...messages.slice(1),
