@@ -19,6 +19,22 @@ function mapSport(sport) {
   return SPORT_MAP[key] ?? 'other';
 }
 
+// session.start_time is UTC. The top-level activity message sometimes also
+// carries local_timestamp alongside its own UTC timestamp — when both are
+// present we can derive the device's recorded offset and apply it, the same
+// fix as WHOOP/Strava's date derivation. Falls back to the UTC date
+// (previous behavior) when the file doesn't carry that pair.
+function localDateFromActivity(startTime, activity) {
+  if (!startTime) return new Date().toISOString().split('T')[0];
+  const utc = activity?.timestamp;
+  const local = activity?.local_timestamp;
+  if (utc instanceof Date && local instanceof Date) {
+    const offsetMs = local.getTime() - utc.getTime();
+    return new Date(startTime.getTime() + offsetMs).toISOString().split('T')[0];
+  }
+  return startTime.toISOString().split('T')[0];
+}
+
 export async function parseFitFile(buffer) {
   try {
     const parser = new FitParser({
@@ -44,9 +60,7 @@ export async function parseFitFile(buffer) {
       avgPaceSecondsPerKm = durationSeconds / (distanceMeters / 1000);
     }
 
-    const date = session.start_time
-      ? session.start_time.toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0];
+    const date = localDateFromActivity(session.start_time, data.activity);
 
     const id = deriveActivityId(date, type, durationSeconds);
 
