@@ -1,10 +1,15 @@
 import Database from 'better-sqlite3';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { mkdirSync } from 'node:fs';
 import { deriveActivityId } from './services/activityId.js';
+import { isDemoMode } from './utils/demoMode.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DB_PATH = join(__dirname, '..', 'data', 'coach.db');
+// Demo mode reads/writes data/demo.db — a completely separate file from the
+// real data/coach.db, so seeding or running the public demo can never touch
+// real synced data.
+const DB_PATH = join(__dirname, '..', 'data', isDemoMode() ? 'demo.db' : 'coach.db');
 
 let db;
 
@@ -75,6 +80,10 @@ function migrateActivityIds(db) {
 }
 
 export function initDb() {
+  // data/ is gitignored (it holds real synced health data) — a fresh clone
+  // won't have it yet, and better-sqlite3 refuses to create the directory
+  // itself.
+  mkdirSync(dirname(DB_PATH), { recursive: true });
   db = new Database(DB_PATH);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
