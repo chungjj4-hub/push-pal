@@ -85,7 +85,10 @@ export async function ensureToken() {
 
 function activityToRow(a) {
   const type = mapSport(a.sport_type ?? a.type);
-  const date = a.start_date?.split('T')[0] ?? new Date().toISOString().split('T')[0];
+  // start_date_local (not start_date, which is UTC) — Strava already applies
+  // the activity's own UTC offset to this field, so a late-evening local
+  // activity doesn't roll onto the next UTC day.
+  const date = a.start_date_local?.split('T')[0] ?? a.start_date?.split('T')[0] ?? new Date().toISOString().split('T')[0];
   const distanceMeters = a.distance ?? null;
   const durationSeconds = a.elapsed_time ?? null;
   const avgPaceSecondsPerKm = (durationSeconds > 0 && distanceMeters > 0)

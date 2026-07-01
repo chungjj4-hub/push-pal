@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { getDb } from '../db.js';
 import { deriveActivityId } from './activityId.js';
+import { localDateFromOffset } from '../utils/units.js';
 
 const WHOOP_BASE = 'https://api.prod.whoop.com';
 const SCOPES = 'read:recovery read:cycles read:workout read:sleep read:profile read:body_measurement offline';
@@ -140,7 +141,7 @@ function workoutToRow(w) {
     : null;
   const score = w.score ?? {};
   const type = mapWhoopSport(w.sport_name);
-  const date = w.start ? w.start.split('T')[0] : null;
+  const date = localDateFromOffset(w.start, w.timezone_offset);
   return {
     id: deriveActivityId(date, type, durationSeconds),
     type,
@@ -232,7 +233,7 @@ export async function syncWhoop(days = 7) {
 
   const insertAll = db.transaction(() => {
     for (const cycle of cycles) {
-      const date = cycle.start ? cycle.start.split('T')[0] : null;
+      const date = localDateFromOffset(cycle.start, cycle.timezone_offset);
       upsertCycle.run(
         cycle.id,
         date,
