@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getDb } from '../db.js';
 import { getAuthUrl, exchangeCode, hasToken } from '../services/whoopService.js';
+import { isDemoMode } from '../utils/demoMode.js';
 
 const router = Router();
 
@@ -47,7 +48,10 @@ router.post('/exchange', async (req, res) => {
 });
 
 router.get('/status', (_req, res) => {
-  res.json({ connected: hasToken() });
+  // Demo mode reports "connected" so the seeded data renders through the
+  // real UI without a broken-looking connect flow — hasToken() (used
+  // internally by cron/sync) is untouched, so no real sync is ever attempted.
+  res.json({ connected: isDemoMode() ? true : hasToken() });
 });
 
 export default router;

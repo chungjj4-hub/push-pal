@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getAuthUrl, exchangeCode, hasToken, syncStrava } from '../services/stravaService.js';
+import { isDemoMode } from '../utils/demoMode.js';
 
 const router = Router();
 
@@ -22,7 +23,7 @@ router.get('/callback', async (req, res) => {
 });
 
 router.get('/status', (_req, res) => {
-  res.json({ connected: hasToken() });
+  res.json({ connected: isDemoMode() ? true : hasToken() });
 });
 
 router.post('/sync', async (_req, res) => {

@@ -3,6 +3,8 @@ import { getDb } from '../db.js';
 import { metersToMiles, metersToFeet, toImperialActivity } from '../utils/units.js';
 import { hasToken as whoopHasToken } from './whoopService.js';
 import { hasToken as stravaHasToken } from './stravaService.js';
+import { isDemoMode } from '../utils/demoMode.js';
+import { getDemoBriefing, getDemoChatReply, streamDemoReply } from './demoCoach.js';
 
 const client = new Anthropic();
 
@@ -129,6 +131,10 @@ export function buildContext() {
 
 export async function getBriefing() {
   const context = buildContext();
+
+  // Public demo builds don't make live Anthropic calls — see demoCoach.js.
+  if (isDemoMode()) return getDemoBriefing(context);
+
   const userMessage = `Today is ${context.today.weekday}, ${context.today.date}. Every date below carries its own weekday — use those, never compute a weekday yourself.\n\nHere is Justin's current training data:\n\n${JSON.stringify(context, null, 2)}\n\nGenerate today's morning briefing as a JSON object with exactly these fields:\n{\n  "readiness": "high | moderate | low",\n  "todayRecommendation": "2-4 specific, actionable sentences",\n  "watchOuts": ["specific flags with real numbers"],\n  "weeklySnapshot": "1-2 sentences on the week",\n  "coachNote": "PUNCHY closing line — the single sharpest takeaway. 1-2 short sentences, ~30 words MAX, must fit in 3 lines. No preamble, no hedging. Make it land."\n}\n\nReturn only valid JSON, no markdown.`;
 
   const message = await client.messages.create({
@@ -152,6 +158,15 @@ export async function getBriefing() {
 
 export async function* streamChat(messages) {
   const context = buildContext();
+
+  // Public demo builds don't make live Anthropic calls — see demoCoach.js.
+  if (isDemoMode()) {
+    const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content ?? '';
+    const reply = getDemoChatReply(lastUserMessage, context);
+    for await (const chunk of streamDemoReply(reply)) yield chunk;
+    return;
+  }
+
   const contextMsg = `[Today is ${context.today.weekday}, ${context.today.date}. Every date below carries its own weekday — use those, never compute a weekday yourself. connectedSources shows which integrations are actually connected right now; recentActivities[].source shows which one each activity came from ("whoop" | "strava" | "fit" for manually-imported .fit files) — cite these directly instead of saying you don't know. Current training context: ${JSON.stringify(context)}]\n\n`;
   const augmentedMessages = [
     { role: 'user', content: contextMsg + messages[0].content },
