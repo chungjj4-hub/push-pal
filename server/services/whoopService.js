@@ -4,6 +4,19 @@ import { getDb } from '../db.js';
 const WHOOP_BASE = 'https://api.prod.whoop.com';
 const SCOPES = 'read:recovery read:cycles read:workout read:sleep read:profile read:body_measurement offline';
 
+const WHOOP_SPORT_MAP = {
+  running: 'run', trail_running: 'run', treadmill_running: 'run', walking: 'run', hiking: 'run',
+  cycling: 'other', mountain_biking: 'other', peloton_bike: 'other', gravel_biking: 'other',
+  weightlifting: 'lift', powerlifting: 'lift', functional_fitness: 'lift', crossfit: 'lift',
+  soccer: 'soccer',
+  rock_climbing: 'climb', bouldering: 'climb', ice_climbing: 'climb',
+};
+
+function mapWhoopSport(sportName) {
+  if (!sportName) return 'other';
+  return WHOOP_SPORT_MAP[sportName.toLowerCase().replace(/[\s-]/g, '_')] ?? 'other';
+}
+
 function sleepPctToScore(pct) {
   if (pct == null) return null;
   if (pct < 50) return 1;
@@ -116,16 +129,45 @@ export async function fetchSleeps(startIso, endIso) {
   return paginate('/developer/v2/activity/sleep', { start: startIso, end: endIso });
 }
 
+export async function fetchWorkouts(startIso, endIso) {
+  return paginate('/developer/v2/activity/workout', { start: startIso, end: endIso });
+}
+
+function workoutToRow(w) {
+  const durationSeconds = (w.start && w.end)
+    ? Math.round((new Date(w.end) - new Date(w.start)) / 1000)
+    : null;
+  const score = w.score ?? {};
+  return {
+    id: `whoop_${w.id}`,
+    type: mapWhoopSport(w.sport_name),
+    date: w.start ? w.start.split('T')[0] : null,
+    duration_seconds: durationSeconds,
+    distance_meters: score.distance_meter ?? null,
+    avg_pace_seconds_per_km: null,
+    avg_hr: score.average_heart_rate ?? null,
+    max_hr: score.max_heart_rate ?? null,
+    calories: score.kilojoule != null ? Math.round(score.kilojoule / 4.184) : null,
+    elevation_gain_meters: score.altitude_gain_meter ?? null,
+    cadence: null,
+    vo2max: null,
+    training_load: score.strain ?? null,
+    raw_json: JSON.stringify(w),
+    synced_at: new Date().toISOString(),
+  };
+}
+
 export async function syncWhoop(days = 7) {
   await ensureToken(); // refresh once before parallel fetches to avoid rotation race
   const db = getDb();
   const start = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
   const end = new Date().toISOString();
 
-  const [cycles, recoveries, sleeps] = await Promise.all([
+  const [cycles, recoveries, sleeps, workouts] = await Promise.all([
     fetchCycles(start, end),
     fetchRecoveries(start, end),
     fetchSleeps(start, end),
+    fetchWorkouts(start, end),
   ]);
 
   const recoveryByCycleId = Object.fromEntries(recoveries.map(r => [r.cycle_id, r]));
@@ -158,6 +200,27 @@ export async function syncWhoop(days = 7) {
       rem_sleep_seconds = ?,
       synced_at = ?
     WHERE id = ?
+  `);
+
+  const upsertWorkout = db.prepare(`
+    INSERT INTO coros_activities
+      (id, type, date, duration_seconds, distance_meters, avg_pace_seconds_per_km,
+       avg_hr, max_hr, calories, elevation_gain_meters, cadence, vo2max,
+       training_load, raw_json, synced_at)
+    VALUES
+      (@id, @type, @date, @duration_seconds, @distance_meters, @avg_pace_seconds_per_km,
+       @avg_hr, @max_hr, @calories, @elevation_gain_meters, @cadence, @vo2max,
+       @training_load, @raw_json, @synced_at)
+    ON CONFLICT(id) DO UPDATE SET
+      type = excluded.type, date = excluded.date,
+      duration_seconds = excluded.duration_seconds,
+      distance_meters = excluded.distance_meters,
+      avg_hr = excluded.avg_hr, max_hr = excluded.max_hr,
+      calories = excluded.calories,
+      elevation_gain_meters = excluded.elevation_gain_meters,
+      training_load = excluded.training_load,
+      raw_json = excluded.raw_json,
+      synced_at = excluded.synced_at
   `);
 
   const now = new Date().toISOString();
@@ -201,10 +264,14 @@ export async function syncWhoop(days = 7) {
         );
       }
     }
+
+    for (const workout of workouts) {
+      upsertWorkout.run(workoutToRow(workout));
+    }
   });
 
   insertAll();
-  return { synced: cycles.length };
+  return { synced: cycles.length, workoutsSynced: workouts.length };
 }
 
 export function hasToken() {

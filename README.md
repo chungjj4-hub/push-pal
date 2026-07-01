@@ -1,6 +1,6 @@
 # Push Pal
 
-Personal AI fitness coaching app for Justin. Syncs WHOOP recovery data automatically, imports COROS workouts via .fit files, and uses Claude to generate daily briefings and conversational coaching.
+Personal AI fitness coaching app for Justin. Syncs WHOOP recovery data and Strava workouts automatically, supports manual COROS .fit file import as a fallback, and uses Claude to generate daily briefings and conversational coaching.
 
 ---
 
@@ -34,6 +34,11 @@ cp .env.example .env
 - Set the redirect URI to: `http://localhost:3001/whoop/callback`
 - Copy the Client ID and Client Secret into your `.env`
 
+**Strava OAuth2**
+- Go to https://www.strava.com/settings/api and create a new app
+- Set the Authorization Callback Domain to: `localhost`
+- Copy the Client ID and Client Secret into your `.env` as `STRAVA_CLIENT_ID` / `STRAVA_CLIENT_SECRET`
+
 ### 3. Install Dependencies
 
 ```bash
@@ -59,9 +64,15 @@ Visit `http://localhost:3001/whoop/auth` in your browser. This redirects to WHOO
 
 On first launch, Push Pal automatically backfills 90 days of WHOOP recovery and sleep data. After that, it syncs every hour in the background.
 
-### 6. Import COROS Workouts
+### 6. Connect Strava (one-time)
 
-Push Pal does not use the COROS API. Instead, export .fit files directly from the COROS app:
+Visit `http://localhost:3001/strava/auth` in your browser. This redirects to Strava's OAuth flow. After authorizing, you'll be redirected back to the app.
+
+On connect, Push Pal backfills 90 days of Strava activities. After that, it syncs the last 7 days every 3 hours in the background (rate-limited to Strava's 100 req/15min, 1000/day caps). Synced activities are stored alongside COROS-imported ones.
+
+### 7. Import COROS Workouts (manual fallback)
+
+Push Pal does not use the COROS API directly. If a workout hasn't made it to Strava (or you're not using Strava), export .fit files directly from the COROS app instead:
 
 1. Open the COROS app on your phone
 2. Tap Profile → Settings → Export Data
@@ -78,8 +89,11 @@ You can import multiple files at once. Re-importing the same file is safe — du
 ## Architecture
 
 ```
-COROS Watch → .fit files → Push Pal (drag & drop upload)
-WHOOP Band  → WHOOP Cloud  ← Express backend (polls hourly)
+COROS Watch → Strava (auto-upload) ┐
+COROS Watch → .fit files ──────────┼→ Push Pal
+                                    │  (Strava: Express backend polls every 3h)
+                                    │  (.fit: drag & drop upload, manual fallback)
+WHOOP Band  → WHOOP Cloud ─────────┘  (Express backend polls hourly)
                                       ↓
                                SQLite (data/coach.db)
                                       ↓
@@ -88,4 +102,4 @@ WHOOP Band  → WHOOP Cloud  ← Express backend (polls hourly)
                           Anthropic (claude-sonnet-4-6)
 ```
 
-**Stack:** Node.js 22 + Express · SQLite (better-sqlite3) · React + Vite + Tailwind · Recharts · Anthropic SDK · node-cron · multer + fit-file-parser
+**Stack:** Node.js 22 + Express · SQLite (better-sqlite3) · React + Vite + Tailwind · Recharts · Anthropic SDK · node-cron · axios (Strava/WHOOP APIs) · multer + fit-file-parser
