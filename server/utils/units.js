@@ -17,6 +17,7 @@ export function toImperialActivity(a) {
     id: a.id,
     date: a.date,
     type: a.type,
+    source: a.source,
     duration_seconds: a.duration_seconds,
     distance_miles: metersToMiles(a.distance_meters),
     avg_pace_min_per_mile: formatPaceMinPerMile(a.avg_pace_seconds_per_km),
