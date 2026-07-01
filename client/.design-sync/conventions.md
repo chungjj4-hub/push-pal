@@ -32,11 +32,11 @@ All exports are on `window.PushPal.*`. Most are standalone — no provider neede
 
 **`CoachNote`** — the AI coach voice card. Light translucent lavender on the dark app surface (hardcoded `VOICE` const, not tokens). Usage: `<CoachNote>coaching text here</CoachNote>`. Supports `**bold**` markdown inline. Optional `label` prop (default "Push Pal").
 
-**`Logo`** — bolt mark SVG in rounded indigo square. Props: `size` (number, default 28), `variant` ("default" | "splash"). Use in headers and splash screens.
+**`Logo`** — bolt mark SVG in rounded indigo square. Props: `size` (number, default 26), `variant` ("brand" | "splash", default "brand"), `radius` (number, optional corner-radius override — defaults to ≈0.3×`size`). Use in headers and splash screens.
 
-**`GoalProgressBar`** — horizontal progress bar. Props: `pct` (0–100), `label` (string), `sublabel` (string). Fills in `--brand` indigo.
+**`GoalProgressBar`** — horizontal progress bar. Props: `pct` (0–100), `label` (string), `sublabel` (string), `color` (CSS color, default `var(--accent)` — override for warn/danger states). Fills in `--accent` green by default, not `--brand`.
 
-**`GoalCard`** — expandable training card. Props: `title`, `subtitle`, `badge`, `expandedContent` (ReactNode). Chevron animates on expand.
+**`GoalCard`** — expandable training card. Props: `title`, `summary` (ReactNode, always-visible body — countdown/progress/chips), `badge`, `expandedContent` (ReactNode). Chevron animates on expand.
 
 **`BriefingCard`** — the morning readiness card. Props: `briefing` ({readiness, todayRecommendation, watchOuts, weeklySnapshot, coachNote}), `stats` ({today, avg} with recovery/hrv/rhr), `weekly` ({pct, current, target}). Contains `CoachNote` and `GoalProgressBar` internally.
 
