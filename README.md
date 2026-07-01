@@ -2,7 +2,7 @@
 
 **A wearable-agnostic AI training coach** — WHOOP recovery data, Strava activity data, and manual `.fit` imports feed one Claude-powered coach that reasons across all of it, instead of living inside any single vendor's app.
 
-🔗 **Live demo:** [add URL here] · 🎥 **Walkthrough:** [add Loom link here]
+🔗 **Live demo:** [add URL here]
 
 ---
 
@@ -14,14 +14,13 @@ Every wearable ships its own coach — WHOOP Coach, Garmin Coach, Strava's fitne
 
 ## See it in 60 seconds
 
-<!-- TODO: screenshot — Today page / BriefingCard, showing the morning readiness summary + CoachNote -->
-![Briefing card](docs/screenshots/briefing-card.png)
+| Today — morning briefing | Coach — grounded chat |
+|---|---|
+| ![Briefing card](docs/screenshots/briefing-card.png) | ![Coach chat](docs/screenshots/coach-chat.png) |
 
-<!-- TODO: screenshot or GIF — Coach chat, a real back-and-forth exchange -->
-![Coach chat](docs/screenshots/coach-chat.png)
-
-<!-- TODO: screenshot — Progress page, goal cards + trend charts -->
-![Progress page](docs/screenshots/progress.png)
+| Progress — goal-first trends | Log — check-in + workout logging |
+|---|---|
+| ![Progress page](docs/screenshots/progress.png) | ![Log check-in](docs/screenshots/log-checkin.png) |
 
 No API keys required — this runs entirely on generated demo data:
 
