@@ -8,6 +8,7 @@ export default function JournalCheckIn({ onSaved }) {
   const [form, setForm] = useState({ energy: 3, mood: 3, soreness_areas: [], sleep_quality: null, notes: '' });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetch(`/journal?days=1`)
@@ -32,16 +33,25 @@ export default function JournalCheckIn({ onSaved }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
+    setError(null);
     try {
-      await fetch('/journal', {
+      const res = await fetch('/journal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date: today, ...form }),
       });
+      // fetch() only throws on network failure — a 4xx/5xx response lands
+      // here as a "successful" promise, so an unchecked status would show
+      // "✓ Logged" even when nothing was actually saved.
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Save failed (${res.status})`);
+      }
       setSaved(true);
       onSaved?.();
     } catch (err) {
       console.error(err);
+      setError(err.message);
     } finally {
       setSaving(false);
     }
@@ -121,6 +131,12 @@ export default function JournalCheckIn({ onSaved }) {
             }}
           />
         </div>
+
+        {error && (
+          <div style={{ fontSize: '13px', color: 'var(--danger)' }}>
+            Couldn't save: {error}
+          </div>
+        )}
 
         <button
           type="submit"
