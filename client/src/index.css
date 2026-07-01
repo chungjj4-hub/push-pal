@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+:root {
+  /* ── Dark theme (default/active) ───────────────────────── */
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface-2: #1b1b1b;
+  --border: #1f1f1f;
+
+  /* Semantic / status — good · moderate · poor. Never reused for brand. */
+  --accent: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+
+  --text: #f5f5f5;
+  --text-muted: #737373;
+
+  /* ── Brand (indigo) ────────────────────────────────────────
+     The ONLY place brand color appears: logo, splash, Coach voice,
+     and singular high-emphasis call-outs. Never used for status. */
+  --brand: #5b4fe8;
+  --brand-tint: #1a1633;   /* dark-appropriate indigo wash (light: #f4f2ff) */
+  --brand-text: #c9c2ff;   /* light lavender for voice text (light: #2b2470) */
+
+  --font-voice: 'Newsreader', Georgia, 'Times New Roman', serif;
+}
+
+/* ── Light theme (scaffolded) ──────────────────────────────────
+   Not active by default. Flip the whole app by setting
+   <html data-theme="light">. Brand tint/text use the light-mode
+   indigo pair here rather than reusing dark values. */
+:root[data-theme="light"] {
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --surface-2: #ffffff;
+  --border: #e6e6ea;
+  --text: #1a1a1a;
+  --text-muted: #6b7280;
+  --brand-tint: #f4f2ff;
+  --brand-text: #2b2470;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Shared loading-dot pulse (splash + chat typing indicator) */
+@keyframes pp-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50%      { opacity: 1;   transform: scale(1); }
+}
+
+/* Splash phrase cross-fade */
+@keyframes pp-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

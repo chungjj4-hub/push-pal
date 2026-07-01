@@ -1,0 +1,20 @@
+{
+  "projectId": "a4875582-d413-4d1d-a265-641592d48d8c",
+  "shape": "package",
+  "pkg": "push-pal",
+  "globalName": "PushPal",
+  "srcDir": "src/components",
+  "cssEntry": "src/ds-tokens.css",
+  "runtimeFontPrefixes": ["Inter", "Newsreader"],
+  "readmeHeader": ".design-sync/conventions.md",
+  "componentSrcMap": {
+    "BottomNav":      "src/components/BottomNav.jsx",
+    "BriefingCard":   "src/components/BriefingCard.jsx",
+    "CoachNote":      "src/components/CoachNote.jsx",
+    "GoalCard":       "src/components/GoalCard.jsx",
+    "GoalProgressBar":"src/components/GoalProgressBar.jsx",
+    "JournalCheckIn": "src/components/JournalCheckIn.jsx",
+    "Logo":           "src/components/Logo.jsx",
+    "Splash":         "src/components/Splash.jsx"
+  }
+}

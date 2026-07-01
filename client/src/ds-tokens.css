@@ -1,0 +1,53 @@
+/* Push Pal design tokens — standalone (no Tailwind import) for Claude Design sync */
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface-2: #1b1b1b;
+  --border: #1f1f1f;
+
+  --accent: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+
+  --text: #f5f5f5;
+  --text-muted: #737373;
+
+  --brand: #5b4fe8;
+  --brand-tint: #1a1633;
+  --brand-text: #c9c2ff;
+
+  --font-voice: 'Newsreader', Georgia, 'Times New Roman', serif;
+}
+
+:root[data-theme="light"] {
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --surface-2: #ffffff;
+  --border: #e6e6ea;
+  --text: #1a1a1a;
+  --text-muted: #6b7280;
+  --brand-tint: #f4f2ff;
+  --brand-text: #2b2470;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes pp-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50%      { opacity: 1;   transform: scale(1); }
+}
+
+@keyframes pp-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
