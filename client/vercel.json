@@ -1,0 +1,14 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/whoop/:path*", "destination": "https://YOUR-RAILWAY-URL.up.railway.app/whoop/:path*" },
+    { "source": "/strava/:path*", "destination": "https://YOUR-RAILWAY-URL.up.railway.app/strava/:path*" },
+    { "source": "/fit/:path*", "destination": "https://YOUR-RAILWAY-URL.up.railway.app/fit/:path*" },
+    { "source": "/workouts/:path*", "destination": "https://YOUR-RAILWAY-URL.up.railway.app/workouts/:path*" },
+    { "source": "/journal/:path*", "destination": "https://YOUR-RAILWAY-URL.up.railway.app/journal/:path*" },
+    { "source": "/goals/:path*", "destination": "https://YOUR-RAILWAY-URL.up.railway.app/goals/:path*" },
+    { "source": "/coach/:path*", "destination": "https://YOUR-RAILWAY-URL.up.railway.app/coach/:path*" },
+    { "source": "/health", "destination": "https://YOUR-RAILWAY-URL.up.railway.app/health" }
+  ]
+}

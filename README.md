@@ -105,6 +105,29 @@ npm run dev   # backend on :3001, frontend on :5173
 
 ---
 
+## Deploying the public demo (Railway + Vercel)
+
+The backend is stateful (Express + SQLite + `node-cron` background sync jobs) — a poor fit for Vercel's serverless model, which doesn't persist local files or run long-lived processes between requests. Railway runs a real long-lived container instead, so: **Railway for the backend, Vercel for the frontend.**
+
+The client calls the API with relative paths (`fetch('/coach/briefing')` etc.) that only resolve today because Vite's dev server proxies them to `localhost:3001`. `client/vercel.json` (already in the repo) replicates that with a production rewrite rule, so **no client code changes are needed** — just fill in your Railway URL once you have it.
+
+**1. Backend → Railway**
+- New project → deploy from this GitHub repo → set the service **root directory to `server/`**.
+- Railway auto-detects the `start` script (`node index.js`); `server/package.json` pins `"engines": { "node": "22.x" }` so the build doesn't hit the same native-module compile failure `better-sqlite3` has on newer Node (confirmed locally — Node 26 fails to compile it from source).
+- Environment variables: just `DEMO_MODE=true`. No Anthropic/WHOOP/Strava keys needed in demo mode.
+- `data/` (holding `demo.db`) resolves one directory above wherever `server/db.js` runs from — if you want seeded data to survive redeploys, attach a Railway volume covering that path (verify the exact mount path against your service's actual root once deployed, since it depends on how Railway resolves the "root directory" setting). Without a volume, redeploys just reset to a fresh seed, which is fine for a demo — `npm run seed:demo` can also run as part of the start command if you'd rather always start clean.
+- Copy the generated `*.up.railway.app` URL.
+
+**2. Frontend → Vercel**
+- New project → this GitHub repo → set the project **root directory to `client/`**.
+- Framework preset: Vite (auto-detected). `client/vercel.json` supplies the build command, output directory, and API rewrites.
+- Before deploying, replace every `YOUR-RAILWAY-URL.up.railway.app` in `client/vercel.json` with your actual Railway URL from step 1, commit, push.
+- Deploy — Vercel builds the static frontend and transparently proxies `/whoop/*`, `/strava/*`, `/coach/*`, etc. to Railway server-side, so the browser only ever talks to your Vercel domain (no CORS configuration needed either, since the proxying happens server-to-server).
+
+**3. Add the URL here** once it's live: [add URL here] → update the top of this README.
+
+---
+
 ## What's not here yet
 
 No automated test suite and no CI pipeline — this was built solo, fast, for personal use first and a portfolio piece second. If this were headed to production: contract tests around the WHOOP/Strava sync normalization logic (that's where the real correctness risk lives — timezone handling, cross-source dedup) would be the first thing added.
