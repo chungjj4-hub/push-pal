@@ -173,6 +173,7 @@ function Step({ n, text }) {
 
 export default function Today() {
   const [briefing, setBriefing] = useState(null);
+  const [briefingError, setBriefingError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [whoopConnected, setWhoopConnected] = useState(null);
   const [stats, setStats] = useState(null);
@@ -184,15 +185,20 @@ export default function Today() {
       setBriefing(cached);
       setLoading(false);
     } else {
+      setBriefingError(null);
       fetch('/coach/briefing', { method: 'POST' })
         .then(r => r.json())
         .then(data => {
           if (!data.error) {
             setCachedBriefing(data);
             setBriefing(data);
+          } else {
+            // Surface the real reason (e.g. an Anthropic billing/API error)
+            // instead of always blaming it on WHOOP still syncing.
+            setBriefingError(data.error);
           }
         })
-        .catch(() => {})
+        .catch(() => setBriefingError('Could not reach the server.'))
         .finally(() => setLoading(false));
     }
   }
@@ -254,7 +260,9 @@ export default function Today() {
           color: 'var(--text-muted)',
           fontSize: '14px',
         }}>
-          No briefing available — WHOOP data is syncing, check back in a minute.
+          {briefingError
+            ? <>Couldn't generate today's briefing: <span style={{ color: 'var(--danger)' }}>{briefingError}</span></>
+            : 'No briefing available — WHOOP data is syncing, check back in a minute.'}
         </div>
       )}
     </div>
