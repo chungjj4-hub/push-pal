@@ -1,4 +1,4 @@
-# Push Pal
+# Push Pal (PRD)
 
 **A wearable-agnostic AI training coach** — WHOOP recovery data, Strava activity data, and manual `.fit` imports feed one Claude-powered coach that reasons across all of it, instead of living inside any single vendor's app.
 
